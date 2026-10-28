@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>لميني ميدو</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1d2233; --panel:#272d42; --chat:#1a1e2e; --line:#37405c;
+  --text:#ede7da; --soft:#b9b6bf; --mint:#86d1b8; --him:#f0b86e; --her:#a9a4ff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Cairo',Tahoma,sans-serif;line-height:1.9;min-height:100vh;overflow-x:hidden}
+.num{direction:ltr;display:inline-block;unicode-bidi:isolate}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+
+/* القفل */
+#lock{position:fixed;inset:0;background:var(--bg);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .5s,visibility .5s}
+#lock.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.card{width:100%;max-width:380px;background:var(--panel);border-radius:18px;padding:30px 24px}
+.who{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:18px;color:#1a1e2e;flex:none}
+.av.her{background:var(--her)} .av.him{background:var(--him)}
+.who h1{font-size:19px;font-weight:900;line-height:1.3}
+.who small{color:var(--soft);font-size:13px}
+.bio{background:var(--chat);border-radius:10px;padding:12px 14px;font-size:13px;color:#cfcbd6;margin-bottom:22px}
+.card label{display:block;font-size:14px;margin-bottom:8px}
+.card input{width:100%;background:var(--chat);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:11px 14px;font-size:16px;text-align:center;margin-bottom:12px;font-family:inherit}
+.card .go{width:100%;border:0;border-radius:10px;background:var(--mint);color:#13201b;font-weight:700;font-size:15px;padding:11px;cursor:pointer}
+#err{color:#ff9b9b;font-size:13px;min-height:22px;margin-top:8px;text-align:center}
+
+/* الصفحة */
+#app{display:none;max-width:660px;margin:0 auto;padding:18px 16px 90px}
+#app.on{display:block}
+.player{position:sticky;top:10px;z-index:20;background:rgba(39,45,66,.96);backdrop-filter:blur(6px);border-radius:14px;padding:12px 14px;margin-bottom:28px}
+.prow{display:flex;align-items:center;gap:12px}
+#play{width:40px;height:40px;border-radius:50%;border:0;background:var(--mint);color:#13201b;font-size:15px;cursor:pointer;flex:none}
+.pinfo{flex:1;min-width:0}
+.pinfo b{display:block;font-size:14px}
+.pinfo span{font-size:12px;color:var(--soft)}
+.bar{height:3px;background:var(--line);border-radius:3px;margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--mint);transition:width .5s linear}
+
+.step{padding:6px 18px 6px 0;border-inline-start:3px solid var(--line);margin-bottom:34px;opacity:.18;transition:opacity .8s,border-color .5s}
+.step.open{opacity:1}
+.step.now{border-color:var(--mint)}
+.step .date{font-size:13px;color:var(--mint);margin-bottom:2px}
+.step h2{font-size:21px;font-weight:900;line-height:1.5;margin-bottom:8px}
+.step p{font-size:16px;color:#ddd8cf;margin-bottom:12px;max-width:60ch}
+
+.chat{background:var(--chat);border-radius:12px;padding:6px 14px;margin:14px 0}
+.m{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:9px 0}
+.m .av{width:34px;height:34px;font-size:14px}
+.m .top{font-size:13.5px;font-weight:700}
+.m .top .num{font-weight:400;font-size:11.5px;color:var(--soft);margin-inline-start:8px}
+.m.her .top b{color:var(--her)} .m.him .top b{color:var(--him)}
+.m .t{font-size:15px;color:#e8e4dc;line-height:1.8}
+
+.dock{background:var(--panel);border-radius:16px;padding:24px;text-align:center}
+.dock p.n{font-size:14px;color:var(--soft);margin-bottom:14px}
+#peace{width:100%;padding:13px;border-radius:12px;border:0;font-size:16px;font-weight:700;background:var(--line);color:var(--soft);cursor:not-allowed}
+#peace.ready{background:var(--mint);color:#13201b;cursor:pointer}
+#final{display:none;margin-top:18px;text-align:right;background:var(--chat);border-radius:12px;padding:16px}
+#final p{font-size:15px;font-weight:600}
+.copy{display:flex;gap:8px;margin-top:10px}
+.copy input{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:9px 10px;font-family:inherit;font-size:14px}
+.copy button{background:var(--him);color:#2a1d08;border:0;border-radius:8px;padding:0 16px;font-weight:700;cursor:pointer}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<audio id="bg" preload="auto" loop></audio>
+
+<section id="lock">
+  <div class="card">
+    <div class="who">
+      <div class="av her">V</div>
+      <div><h1>VI [AIM]</h1><small class="num">vi.olettt</small></div>
+    </div>
+    <div class="bio">
+      ﴿الَّذِينَ آمَنُوا وَتَطْمَئِنُّ قُلُوبُهُم بِذِكْرِ اللَّهِ ۗ أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ﴾<br>
+      ﴿قالَ كَلّا إِنَّ مَعِيَ رَبّي سَيَهدينِ﴾
+    </div>
+    <form id="form">
+      <label for="pass">اكتبي تاريخ أول رسالة بينا</label>
+      <input id="pass" type="password" class="num" placeholder="••••••••" autocomplete="off" required>
+      <button class="go" type="submit">افتحي</button>
+      <div id="err" role="alert"></div>
+    </form>
+  </div>
+</section>
+
+<main id="app">
+  <div class="player">
+    <div class="prow">
+      <button id="play" aria-label="تشغيل الأغنية">▶</button>
+      <div class="pinfo">
+        <b>الأغنية</b>
+        <span id="pstatus">الصفحة هتنزل لوحدها وانتي بتقرأي</span>
+      </div>
+    </div>
+    <div class="bar"><i id="fill"></i></div>
+  </div>
+
+  <article class="step open now" id="step-1">
+    <div class="date num">8/2/2026</div>
+    <h2>أول رسالة</h2>
+    <p>فاكرة لما بعتلك الفجر الساعة <span class="num">3:49 AM</span> (على ديسكورد طالعة <span class="num">8/2/2026 12:22 AM</span>) واستغربتي وردتي بعلامة استفهام بس؟ وقلتلك هتعرفي كمان شوية؟ دي أول رسالة بينا بعد ما اتقابلنا في سيرفر فالو إيجبت.</p>
+    <p>من يومها بقينا ميدو وميني ميدو. وقفتك جنبي من أول تلفيل للحساب لحد كل جيم سهرنا فيه، وعمري ما هنساها.</p>
+  </article>
+
+  <article class="step" id="step-2">
+    <div class="date num">10/22/2026</div>
+    <h2>ردك الصبح</h2>
+    <p>أنا اتعصبت على الفاضي بسبب حوار سبايدر وقلت كلام ضايقك بالليل. وانتي صحيتي الفجر ورديتي عليا بهدوء وأدب:</p>
+    <div class="chat">
+      <div class="m her"><div class="av her">V</div><div><div class="top"><b>VI [AIM]</b><span class="num">10/22/2026 5:42 AM</span></div><div class="t">متحكمش من نفسك منغير ما تسأل عشان ربنا قال (يا أيها الذين آمنوا اجتنبوا كثيرا من الظن إن بعض الظن إثم) .. زي ما انا كذا مره افهم حاجه وازعل و يطلع سوء فهم بعد ما اسألك</div></div></div>
+      <div class="m him"><div class="av him">م</div><div><div class="top"><b>. [﷽ِ]</b><span class="num">10/22/2026 8:49 AM</span></div><div class="t">عشان ابضن نفسي و اكلم ناس تفقعي مرارتي</div></div></div>
+      <div class="m her"><div class="av her">V</div><div><div class="top"><b>VI [AIM]</b><span class="num">10/22/2026 8:50 AM</span></div><div class="t">استهدي بالله بعد اذنك وقولي في اي .. معلش بعد اذنك .. متقلقش معايا وقت</div></div></div>
+    </div>
+    <p>أنا كنت برد بعصبية وبرخامة، وانتي فضلتي هادية ومصممة نفهم بعض ونصلح الموضوع. ده لوحده بيقول إنك صاحبة بجد.</p>
+  </article>
+
+  <article class="step" id="step-3">
+    <div class="date num">10/22/2026</div>
+    <h2>"في البحر سمكة"</h2>
+    <p>بعد ما قلتلك إني مش فاضي 30 دقيقة، دخلت أغني في الشات وأرخم عليكي. وأنا أصلاً كنت متضايق منك، بس ماقدرتش ألعب من غيرك:</p>
+    <div class="chat">
+      <div class="m him"><div class="av him">م</div><div><div class="top"><b>. [﷽ِ]</b><span class="num">10/22/2026 9:24 AM</span></div><div class="t">في البحر سمكة .. بغني براحتي .. ع الشط واقف صياد ب سمكة</div></div></div>
+      <div class="m him"><div class="av him">م</div><div><div class="top"><b>. [﷽ِ]</b><span class="num">10/22/2026 9:38 AM</span></div><div class="t">افتحي يلا للاسف محتاجين خامس .. للاسف مفيش غيرك</div></div></div>
+      <div class="m her"><div class="av her">V</div><div><div class="top"><b>VI [AIM]</b><span class="num">10/22/2026 9:40 AM</span></div><div class="t">وات ذا .. مش كنت متخانق معايا ؟ .. طيب اوك كنت هفتح العب جيم اصلا لول .. فتحت</div></div></div>
+    </div>
+    <p>حتى وأنا زعلان، أول واحدة جت في دماغي أقولها افتحي نلعب. وانتي فتحتي علطول ومحرجتنيش.</p>
+  </article>
+
+  <article class="step" id="step-4">
+    <div class="date num">10/22/2026</div>
+    <h2>الجملة اللي وجعتك</h2>
+    <p>عصر نفس اليوم الموضوع كبر، وأنا رديت بطريقة ماكانش ينفع تطلع مني ليكي:</p>
+    <div class="chat">
+      <div class="m her"><div class="av her">V</div><div><div class="top"><b>VI [AIM]</b><span class="num">10/22/2026 5:55 PM</span></div><div class="t">انت عارف ان الكلام بيوجع صح ؟</div></div></div>
+      <div class="m him"><div class="av him">م</div><div><div class="top"><b>. [﷽ِ]</b><span class="num">10/22/2026 5:55 PM</span></div><div class="t">اه</div></div></div>
+      <div class="m her"><div class="av her">V</div><div><div class="top"><b>VI [AIM]</b><span class="num">10/22/2026 6:05 PM</span></div><div class="t">كان نفسي منوصلش للنقطه دي .. سلام</div></div></div>
+    </div>
+    <p>والله ما كنت أقصد أوجعك. كان عند وغباء مني وقت العصبية، وحقك عليا.</p>
+  </article>
+
+  <article class="step" id="step-5">
+    <div class="date num">10/26/2026</div>
+    <h2>ليلة المستشفى</h2>
+    <p>وسط الزعل، الفجر اللي اضطريت أقفل فيه الجيم عشان بابا احتاج يروح المستشفى، بعتلك الحسابات لو حابة تلعبي. وده كان أول رد منك:</p>
+    <div class="chat">
+      <div class="m her"><div class="av her">V</div><div><div class="top"><b>VI [AIM]</b><span class="num">1:45 AM</span></div><div class="t">الف سلامه علي بباك</div></div></div>
+      <div class="m him"><div class="av him">م</div><div><div class="top"><b>. [﷽ِ]</b><span class="num">3:25 AM</span></div><div class="t">الله يسلمك .. يااااااااااااااااااااااااااااااااااااه اخيران شفت رسالة</div></div></div>
+    </div>
+    <p>أنا آسف يا ميني ميدو على كل حاجة ضايقتك. انتي أجدع وأطيب صاحبة عرفتها من <span class="num">8/2/2026</span>، وماينفعش شوية عند يبوظوا اللي بينا.</p>
+  </article>
+
+  <div class="dock" id="dock">
+    <p class="n" id="lockmsg">الزرار هيفتح لما الكلام كله يظهر.</p>
+    <button id="peace" disabled>استني شوية...</button>
+    <div id="final">
+      <p>اتصالحنا. انسخي الجملة دي وابعتيها لميدو في ديسكورد:</p>
+      <div class="copy">
+        <input id="reply" value="خلاص صافين يا ميدو ومسمحاك عشان محتاجين خامس (Ns game)" readonly>
+        <button type="button" id="copy">نسخ</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const PASSWORDS = ['8/2/2026','08/02/2026','2026/2/8'];
+const TOTAL = 160;
+const SCHEDULE = [{s:28,id:'step-2'},{s:64,id:'step-3'},{s:100,id:'step-4'},{s:132,id:'step-5'}];
+
+/* الأغنية: حطي ملف song.mp3 جنب الصفحة (الأولوية ليه)، ولو مش موجود يجرب اللينك */
+const SOURCES = ['song.mp3','https://c.top4top.io/m_3953hv6461.mp3'];
+const audio = $('bg'), playBtn = $('play'), pstatus = $('pstatus');
+let srcIndex = 0, failed = false;
+
+function loadSource(){ audio.src = SOURCES[srcIndex]; audio.load(); }
+audio.addEventListener('error', () => {
+  if (srcIndex < SOURCES.length - 1) {
+    srcIndex++; loadSource();
+    audio.play().catch(()=>{});
+  } else {
+    failed = true;
+    playBtn.textContent = '▶';
+    pstatus.textContent = 'الصوت مش شغال دلوقتي، كملي قراية عادي';
+  }
+});
+audio.addEventListener('playing', () => { playBtn.textContent = '❚❚'; pstatus.textContent = 'الصفحة هتنزل لوحدها وانتي بتقرأي'; });
+audio.addEventListener('pause',   () => { playBtn.textContent = '▶'; });
+playBtn.addEventListener('click', () => {
+  if (failed) { failed = false; srcIndex = 0; loadSource(); }
+  if (audio.paused) audio.play().catch(() => { pstatus.textContent = 'دوسي تشغيل تاني'; });
+  else audio.pause();
+});
+loadSource();
+
+/* الجدول الزمني */
+let elapsed = 0, timer = null, done = false;
+function reveal(id){
+  document.querySelectorAll('.step').forEach(e => e.classList.remove('now'));
+  const t = $(id);
+  t.classList.add('open','now');
+  t.scrollIntoView({behavior:'smooth', block:'center'});
+}
+function start(){
+  audio.volume = 1;
+  audio.play().catch(() => { pstatus.textContent = 'دوسي ▶ عشان الأغنية تشتغل'; });
+  timer = setInterval(() => {
+    if (done) return;
+    elapsed++;
+    $('fill').style.width = Math.min(100, elapsed / TOTAL * 100) + '%';
+    SCHEDULE.forEach(i => { if (!i.shown && elapsed >= i.s) { i.shown = true; reveal(i.id); } });
+    if (elapsed >= TOTAL) unlock();
+  }, 1000);
+}
+function unlock(){
+  done = true; clearInterval(timer);
+  $('fill').style.width = '100%';
+  $('lockmsg').textContent = 'خلصنا. دوسي على الزرار:';
+  const b = $('peace');
+  b.disabled = false; b.classList.add('ready'); b.textContent = 'خلاص صافيين يا ميدو 🤝';
+  $('dock').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+$('form').addEventListener('submit', e => {
+  e.preventDefault();
+  if (PASSWORDS.includes($('pass').value.trim())) {
+    $('lock').classList.add('hidden');
+    $('app').classList.add('on');
+    start();
+  } else {
+    $('err').textContent = 'مش هو، جربي تاني.';
+    $('pass').value = '';
+  }
+});
+$('peace').addEventListener('click', () => {
+  if ($('peace').disabled) return;
+  $('final').style.display = 'block';
+  $('peace').textContent = 'اتصالحنا';
+  $('final').scrollIntoView({behavior:'smooth', block:'center'});
+});
+$('copy').addEventListener('click', () => {
+  const v = $('reply').value;
+  const ok = () => { $('copy').textContent = 'اتنسخ'; setTimeout(() => $('copy').textContent = 'نسخ', 2000); };
+  if (navigator.clipboard) navigator.clipboard.writeText(v).then(ok).catch(() => { $('reply').select(); document.execCommand('copy'); ok(); });
+  else { $('reply').select(); document.execCommand('copy'); ok(); }
+});
+</script>
+</body>
+</html>
