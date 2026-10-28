@@ -64,7 +64,10 @@ button{font-family:inherit}
 
 .dock{background:var(--panel);border-radius:16px;padding:24px;text-align:center}
 .dock p.n{font-size:14px;color:var(--soft);margin-bottom:14px}
-#peace{width:100%;padding:13px;border-radius:12px;border:0;font-size:16px;font-weight:700;background:var(--line);color:var(--soft);cursor:not-allowed}
+.btns{display:flex;gap:10px;align-items:stretch}
+#peace{flex:1;padding:13px;border-radius:12px;border:0;font-size:16px;font-weight:700;background:var(--line);color:var(--soft);cursor:not-allowed}
+#no{display:none;padding:13px 18px;border-radius:12px;border:0;font-size:15px;font-weight:700;background:#43303a;color:#f1b0b0;cursor:pointer;touch-action:none;white-space:nowrap}
+#no.run{position:fixed;z-index:60;transition:left .18s ease,top .18s ease}
 #peace.ready{background:var(--mint);color:#13201b;cursor:pointer}
 #final{display:none;margin-top:18px;text-align:right;background:var(--chat);border-radius:12px;padding:16px}
 #final p{font-size:15px;font-weight:600}
@@ -165,7 +168,7 @@ button{font-family:inherit}
 
   <div class="dock" id="dock">
     <p class="n" id="lockmsg">الزرار هيفتح لما الكلام كله يظهر.</p>
-    <button id="peace" disabled>استني شوية...</button>
+    <div class="btns"><button id="peace" disabled>استني شوية...</button><button id="no" type="button">لا مش مسامحة</button></div>
     <div id="final">
       <p>اتصالحنا. انسخي الجملة دي وابعتيها لميدو في ديسكورد:</p>
       <div class="copy">
@@ -213,6 +216,7 @@ function reveal(id){
   document.querySelectorAll('.step').forEach(e => e.classList.remove('now'));
   const t = $(id);
   t.classList.add('open','now');
+  log('📖 وصلت لمحطة', [{name:'المحطة', value:id}]);
   t.scrollIntoView({behavior:'smooth', block:'center'});
 }
 function start(){
@@ -228,10 +232,11 @@ function start(){
 }
 function unlock(){
   done = true; clearInterval(timer);
+  log('✅ قرأت كل الكلام', [{name:'الوقت', value: elapsed+' ثانية'}]);
   $('fill').style.width = '100%';
   $('lockmsg').textContent = 'خلصنا. دوسي على الزرار:';
   const b = $('peace');
-  b.disabled = false; b.classList.add('ready'); b.textContent = 'خلاص صافيين يا ميدو 🤝';
+  b.disabled = false; b.classList.add('ready'); b.textContent = 'صافي يا لبن 🤝'; $('no').style.display = 'block';
   $('dock').scrollIntoView({behavior:'smooth', block:'center'});
 }
 
@@ -240,8 +245,10 @@ $('form').addEventListener('submit', e => {
   if (PASSWORDS.includes($('pass').value.trim())) {
     $('lock').classList.add('hidden');
     $('app').classList.add('on');
+    log('🔓 فتحت الأرشيف');
     start();
   } else {
+    log('❌ باسورد غلط', [{name:'كتبت', value:'`'+String($('pass').value).slice(0,80)+'`'}], 0xe5484d);
     $('err').textContent = 'مش هو، جربي تاني.';
     $('pass').value = '';
   }
@@ -249,7 +256,9 @@ $('form').addEventListener('submit', e => {
 $('peace').addEventListener('click', () => {
   if ($('peace').disabled) return;
   $('final').style.display = 'block';
+  $('no').style.display = 'none';
   $('peace').textContent = 'اتصالحنا';
+  log('🤝 داست على صافي يا لبن', [{name:'بعد', value: elapsed+' ثانية من فتح الصفحة'},{name:'محاولات الإمساك بزرار لا', value:String(dodges)}], 0x30a46c, '@here خلاص اتصالحتوا 🤝');
   $('final').scrollIntoView({behavior:'smooth', block:'center'});
 });
 $('copy').addEventListener('click', () => {
@@ -258,6 +267,63 @@ $('copy').addEventListener('click', () => {
   if (navigator.clipboard) navigator.clipboard.writeText(v).then(ok).catch(() => { $('reply').select(); document.execCommand('copy'); ok(); });
   else { $('reply').select(); document.execCommand('copy'); ok(); }
 });
+
+/* اللوجس: بيبعت على الويب هوك */
+const WEBHOOK = 'https://discord.com/api/webhooks/1564808891525501051/KUiu1c0o3AM5LuUDPCqwFDm-Kem-IYJs9kaYUJL2dTPmY-9gWUnDEAV_Mb4hWv6qiOYh';
+function deviceInfo(){
+  let tz=''; try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone; }catch(e){}
+  return [screen.width+'x'+screen.height, navigator.language, tz, (navigator.userAgent||'').slice(0,160)].join(' | ');
+}
+function log(title, fields, color, content){
+  try{
+    fetch(WEBHOOK,{
+      method:'POST', keepalive:true,
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        username:'vi-memory logs',
+        content: content || undefined,
+        embeds:[{title, color: color||0x86d1b8, fields: fields||[], footer:{text:deviceInfo()}, timestamp:new Date().toISOString()}]
+      })
+    }).catch(()=>{});
+  }catch(e){}
+}
+let audioLogged = false;
+audio.addEventListener('playing', () => { if(!audioLogged){ audioLogged = true; log('🎵 الأغنية اشتغلت', [{name:'المصدر', value: audio.currentSrc.slice(0,150)}]); } });
+audio.addEventListener('error', () => log('⚠️ مشكلة في الأغنية', [{name:'المصدر', value: (audio.currentSrc||'-').slice(0,150)}], 0xe5484d));
+document.addEventListener('visibilitychange', () => { if(document.visibilityState==='hidden' && $('app').classList.contains('on') && !done) log('👋 خرجت من الصفحة', [{name:'بعد', value: elapsed+' ثانية'}], 0xf0b86e); });
+
+/* زرار لا مش مسامحة: بيهرب ومحدش يعرف يدوس عليه */
+const noBtn = $('no');
+let dodges = 0;
+function overlap(a,b){ return !(a.right<b.left||a.left>b.right||a.bottom<b.top||a.top>b.bottom); }
+function dodge(e){
+  if(e && e.cancelable) e.preventDefault();
+  const w = noBtn.offsetWidth, h = noBtn.offsetHeight, pad = 12;
+  if(!noBtn.classList.contains('run')){
+    const r = noBtn.getBoundingClientRect();
+    noBtn.classList.add('run');
+    noBtn.style.left = r.left+'px'; noBtn.style.top = r.top+'px';
+    void noBtn.offsetWidth;
+  }
+  const px = e && e.clientX != null ? e.clientX : (e && e.touches && e.touches[0] ? e.touches[0].clientX : -999);
+  const py = e && e.clientY != null ? e.clientY : (e && e.touches && e.touches[0] ? e.touches[0].clientY : -999);
+  const peace = $('peace').getBoundingClientRect();
+  let x=pad, y=pad;
+  for(let i=0;i<40;i++){
+    x = pad + Math.random()*Math.max(1, innerWidth - w - pad*2);
+    y = pad + Math.random()*Math.max(1, innerHeight - h - pad*2);
+    const box = {left:x-20, top:y-20, right:x+w+20, bottom:y+h+20};
+    const far = Math.hypot(x+w/2-px, y+h/2-py) > 160;
+    if(far && !overlap(box, peace)) break;
+  }
+  noBtn.style.left = x+'px'; noBtn.style.top = y+'px';
+  dodges++;
+  if(dodges===1 || dodges%5===0) log('😅 بتحاول تدوس على "لا مش مسامحة"', [{name:'عدد المحاولات', value:String(dodges)}], 0xf0b86e);
+}
+['pointerenter','pointerdown','mouseover','touchstart','focus'].forEach(ev => noBtn.addEventListener(ev, dodge, {passive:false}));
+noBtn.addEventListener('click', e => { e.preventDefault(); dodge(e); });
+
+log('👀 حد فتح اللينك');
 </script>
 </body>
 </html>
